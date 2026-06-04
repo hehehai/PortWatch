@@ -5,16 +5,17 @@
   "description": "Cross-platform port manager built with Electron, Vue, and TypeScript.",
   "main": "out/main/main.js",
   "type": "module",
+  "packageManager": "pnpm@10.14.0",
   "scripts": {
     "dev": "electron-vite dev",
     "build": "vue-tsc --noEmit && electron-vite build",
     "preview": "electron-vite preview",
-    "app:mac": "npm run build && node script/package-electron.mjs app --platform=darwin",
-    "app:win": "npm run build && node script/package-electron.mjs app --platform=win32",
-    "velopack:mac": "npm run app:mac && node script/package-electron.mjs velopack --platform=darwin",
-    "velopack:win": "npm run app:win && node script/package-electron.mjs velopack --platform=win32",
-    "package:mac": "npm run velopack:mac",
-    "package:win": "npm run velopack:win",
+    "app:mac": "pnpm run build && node script/package-electron.mjs app --platform=darwin",
+    "app:win": "pnpm run build && node script/package-electron.mjs app --platform=win32",
+    "velopack:mac": "pnpm run app:mac && node script/package-electron.mjs velopack --platform=darwin",
+    "velopack:win": "pnpm run app:win && node script/package-electron.mjs velopack --platform=win32",
+    "package:mac": "pnpm run velopack:mac",
+    "package:win": "pnpm run velopack:win",
     "prepare:velopack": "node script/prepare-velopack-cli.mjs",
     "verify:ports": "node script/verify-port-commands.mjs",
     "verify:windows-parser": "node script/verify-windows-port-parser.mjs",
@@ -42,5 +43,13 @@
     "typescript": "^5.9.3",
     "vite": "^6.4.1",
     "vue-tsc": "^2.2.12"
+  },
+  "pnpm": {
+    "onlyBuiltDependencies": [
+      "@swc/core",
+      "electron",
+      "esbuild",
+      "vue-demi"
+    ]
   }
 }

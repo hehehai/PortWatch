@@ -6,4 +6,4 @@ cd "$ROOT_DIR"
 
 pkill -x PortWatch >/dev/null 2>&1 || true
 
-exec npm run dev
+exec pnpm run dev

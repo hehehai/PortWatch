@@ -21,7 +21,7 @@ await extract(packagePath, extractDir)
 await cp(join(extractDir, 'vendor'), join(extractDir, 'tools', 'net8.0', 'any', 'vendor'), { recursive: true })
 
 console.log(`Prepared Velopack CLI package: ${join(extractDir, 'tools', 'net8.0', 'any', 'vpk.dll')}`)
-console.log('Install a .NET 8+ runtime or set DOTNET_PATH before running npm run package:mac/package:win.')
+console.log('Install a .NET 8+ runtime or set DOTNET_PATH before running pnpm run package:mac/package:win.')
 
 function download(url, destination) {
   return new Promise((resolve, reject) => {

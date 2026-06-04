@@ -14,11 +14,11 @@ The Electron app includes:
 ## Development
 
 ```sh
-npm install
-npm run dev
-npm run verify:ports
-npm run verify:windows-parser
-npm run verify:release
+pnpm install
+pnpm run dev
+pnpm run verify:ports
+pnpm run verify:windows-parser
+pnpm run verify:release
 ```
 
 The Electron app reads listening TCP ports through native platform commands:
@@ -35,10 +35,10 @@ Preferences are stored under the Electron `userData` directory as `preferences.j
 ## Build
 
 ```sh
-npm run build
+pnpm run build
 ```
 
-The Codex Run action is wired to `script/run-electron.sh`, which launches the Electron Vite development app. Electron packaging uses a minimal staging directory and `npm run verify:release` asserts that legacy native project files are not included in macOS or Windows app artifacts.
+The Codex Run action is wired to `script/run-electron.sh`, which launches the Electron Vite development app. Electron packaging uses a minimal staging directory and `pnpm run verify:release` asserts that legacy native project files are not included in macOS or Windows app artifacts.
 
 ## CI
 
@@ -65,15 +65,15 @@ npx shadcn-vue@latest add button badge --yes --overwrite
 Electron app bundles are generated from a minimal staging directory so build caches, Git metadata, screenshots, and other workspace files are not copied into the packaged app.
 
 ```sh
-npm run app:mac
-npm run app:win
+pnpm run app:mac
+pnpm run app:win
 ```
 
 If Electron downloads are slow or blocked, use a mirror:
 
 ```sh
-ELECTRON_MIRROR=https://npmmirror.com/mirrors/electron/ npm run app:mac
-ELECTRON_MIRROR=https://npmmirror.com/mirrors/electron/ npm run app:win
+ELECTRON_MIRROR=https://npmmirror.com/mirrors/electron/ pnpm run app:mac
+ELECTRON_MIRROR=https://npmmirror.com/mirrors/electron/ pnpm run app:win
 ```
 
 Outputs:
@@ -100,13 +100,13 @@ Use `Assets/portwatch-update.example.json` as the format reference. `Assets/port
 ```sh
 PORTWATCH_UPDATE_URL=https://your-update-feed.example.com \
 PORTWATCH_UPDATE_CHANNEL=stable \
-npm run package:mac
+pnpm run package:mac
 ```
 
 Velopack release packaging requires the Velopack CLI `vpk` plus a .NET 8+ runtime. The helper script downloads the Velopack CLI NuGet package into `release/tools`:
 
 ```sh
-npm run prepare:velopack
+pnpm run prepare:velopack
 ```
 
 The packaging script resolves `vpk` in this order:
@@ -117,8 +117,8 @@ The packaging script resolves `vpk` in this order:
 - local `release/tools/vpk-1.2.0/tools/net8.0/any/vpk.dll` through `DOTNET_PATH`, `DOTNET_ROOT`, Homebrew `dotnet@8`, or `release/tools/dotnet`
 
 ```sh
-npm run package:mac
-npm run package:win
+pnpm run package:mac
+pnpm run package:win
 ```
 
 On macOS, Windows Velopack releases are cross-compiled with Velopack's `[win]` directive. On non-macOS hosts, macOS releases use `[osx]`.
@@ -133,8 +133,8 @@ Outputs:
 If Electron downloads are slow or blocked, use:
 
 ```sh
-ELECTRON_MIRROR=https://npmmirror.com/mirrors/electron/ npm run package:mac
-ELECTRON_MIRROR=https://npmmirror.com/mirrors/electron/ npm run package:win
+ELECTRON_MIRROR=https://npmmirror.com/mirrors/electron/ pnpm run package:mac
+ELECTRON_MIRROR=https://npmmirror.com/mirrors/electron/ pnpm run package:win
 ```
 
 The generated release packages are currently unsigned and not notarized unless signing identities and notarization options are supplied to Velopack. See the Velopack packaging docs: https://docs.velopack.io/packaging/overview

@@ -5,8 +5,10 @@ import { arch as hostArch, platform as hostPlatform } from 'node:os'
 import { dirname, join } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { spawn } from 'node:child_process'
+import { createRequire } from 'node:module'
 
 const rootDir = dirname(dirname(fileURLToPath(import.meta.url)))
+const requireFromRoot = createRequire(join(rootDir, 'package.json'))
 const packageJson = JSON.parse(await readFile(join(rootDir, 'package.json'), 'utf8'))
 
 const appName = packageJson.productName ?? 'PortWatch'
@@ -134,10 +136,19 @@ async function prepareStageDir() {
 
   await writeFile(join(stageDir, 'package.json'), `${JSON.stringify(stagedPackageJson, null, 2)}\n`)
   await cp(join(rootDir, 'out'), join(stageDir, 'out'), { recursive: true })
-  await cp(join(rootDir, 'node_modules', 'velopack'), join(stageDir, 'node_modules', 'velopack'), { recursive: true })
-  await cp(join(rootDir, 'node_modules', '@neon-rs', 'load'), join(stageDir, 'node_modules', '@neon-rs', 'load'), { recursive: true })
+
+  const velopackDir = packageDir('velopack', requireFromRoot)
+  const requireFromVelopack = createRequire(join(velopackDir, 'package.json'))
+  const neonLoadDir = packageDir('@neon-rs/load', requireFromVelopack)
+
+  await cp(velopackDir, join(stageDir, 'node_modules', 'velopack'), { recursive: true })
+  await cp(neonLoadDir, join(stageDir, 'node_modules', '@neon-rs', 'load'), { recursive: true })
 
   return stageDir
+}
+
+function packageDir(name, requireFn) {
+  return dirname(requireFn.resolve(`${name}/package.json`))
 }
 
 async function prepareExtraResources(stageDir) {
@@ -230,7 +241,7 @@ async function packageVelopack(packagedPath) {
   if (!command) {
     fail([
       'Velopack CLI `vpk` was not found in PATH.',
-      'Install it with `dotnet tool install -g vpk`, install a .NET SDK with `dnx`, or run `npm run prepare:velopack` and set DOTNET_PATH to a .NET 8+ runtime.',
+      'Install it with `dotnet tool install -g vpk`, install a .NET SDK with `dnx`, or run `pnpm run prepare:velopack` and set DOTNET_PATH to a .NET 8+ runtime.',
       'Docs: https://docs.velopack.io/packaging/overview'
     ].join('\n'))
   }
