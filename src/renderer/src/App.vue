@@ -199,10 +199,10 @@ onUnmounted(() => {
 
 <template>
   <main class="flex h-full flex-col gap-2 bg-background p-2">
-    <header class="flex h-12 shrink-0 items-center rounded-lg border border-border/60 bg-white/90 pl-[84px] pr-2 shadow-sm">
-      <Badge>{{ records.length }}</Badge>
+    <header class="window-drag flex h-12 shrink-0 items-center rounded-lg border border-border/60 bg-white/90 pl-[84px] pr-2 shadow-sm">
+      <Badge class="window-no-drag">{{ records.length }}</Badge>
 
-      <div class="ml-auto flex items-center gap-2">
+      <div class="window-no-drag ml-auto flex items-center gap-2">
         <div v-if="panelMode === 'ports'" class="flex rounded-full bg-white p-1 shadow-sm">
           <Button
             variant="ghost"
