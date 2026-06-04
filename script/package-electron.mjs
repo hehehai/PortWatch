@@ -50,6 +50,10 @@ async function packageElectronApp() {
   const extraResource = await prepareExtraResources(stageDir)
   await mkdir(appOutDir, { recursive: true })
 
+  if (targetPlatform === 'win32' && hostPlatform() === 'win32') {
+    return packageElectronAppWithCli(stageDir, extraResource)
+  }
+
   return packager({
     dir: stageDir,
     name: appName,
@@ -81,6 +85,37 @@ async function packageElectronApp() {
       LSMinimumSystemVersion: '11.0'
     }
   })
+}
+
+async function packageElectronAppWithCli(stageDir, extraResource) {
+  const args = [
+    join(rootDir, 'node_modules', '@electron', 'packager', 'bin', 'electron-packager.mjs'),
+    stageDir,
+    appName,
+    `--platform=${targetPlatform}`,
+    `--arch=${targetArch}`,
+    `--out=${appOutDir}`,
+    '--overwrite',
+    '--no-asar',
+    '--no-prune',
+    `--electron-version=${normalizePackageVersion(packageJson.devDependencies.electron)}`,
+    `--executable-name=${appName}`,
+    `--app-version=${packageJson.version}`,
+    `--icon=${join(rootDir, 'Assets', 'portwatch.ico')}`,
+    '--win32metadata.CompanyName=Doit',
+    `--win32metadata.FileDescription=${appName}`,
+    `--win32metadata.ProductName=${appName}`,
+    `--win32metadata.InternalName=${appName}`,
+    `--win32metadata.OriginalFilename=${appName}.exe`,
+    '--win32metadata.requested-execution-level=asInvoker'
+  ]
+
+  for (const resource of extraResource) {
+    args.push(`--extra-resource=${resource}`)
+  }
+
+  await run(process.execPath, args)
+  return [join(appOutDir, `${appName}-${targetPlatform}-${targetArch}`)]
 }
 
 async function prepareStageDir() {
@@ -300,6 +335,10 @@ function defaultPlatform() {
 function defaultArch(platform) {
   if (platform === 'win32') return 'x64'
   return hostArch() === 'arm64' ? 'arm64' : 'x64'
+}
+
+function normalizePackageVersion(value) {
+  return String(value).replace(/^[^\d]*/, '')
 }
 
 async function findCommand(command) {
