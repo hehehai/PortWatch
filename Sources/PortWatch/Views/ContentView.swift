@@ -1,5 +1,12 @@
 import SwiftUI
 
+private enum MainLayout {
+    static let horizontalInset: CGFloat = 10
+    static let headerTopInset: CGFloat = 4
+    static let bottomInset: CGFloat = 10
+    static let windowCornerRadius: CGFloat = 18
+}
+
 struct ContentView: View {
     @ObservedObject var store: PortWatchStore
     @ObservedObject var settingsStore: PortWatchSettingsStore
@@ -7,11 +14,11 @@ struct ContentView: View {
     @State private var panelMode: MainPanelMode = .ports
 
     var body: some View {
-        ZStack(alignment: .top) {
+        ZStack(alignment: .topLeading) {
             Color(red: 0.95, green: 0.95, blue: 0.94)
                 .ignoresSafeArea()
 
-            VStack(spacing: 10) {
+            VStack(spacing: 6) {
                 MainHeaderView(
                     mode: panelMode,
                     visiblePortCount: store.visiblePortCount,
@@ -35,10 +42,14 @@ struct ContentView: View {
                     SettingsView(settingsStore: settingsStore, updater: updater)
                 }
             }
-            .padding(.horizontal, 10)
-            .padding(.top, 2)
-            .padding(.bottom, 10)
+            .padding(.horizontal, MainLayout.horizontalInset)
+            .padding(.top, MainLayout.headerTopInset)
+            .padding(.bottom, MainLayout.bottomInset)
+
+            WindowTrafficLightsView()
         }
+        .ignoresSafeArea(.container, edges: .top)
+        .clipShape(RoundedRectangle(cornerRadius: MainLayout.windowCornerRadius, style: .continuous))
         .alert(
             "Terminate Process?",
             isPresented: terminationAlertPresented,

@@ -6,6 +6,8 @@ enum MainPanelMode {
 }
 
 struct MainHeaderView: View {
+    private let trafficLightReserveWidth: CGFloat = 76
+
     let mode: MainPanelMode
     let visiblePortCount: Int
     let selectedRefreshProfile: RefreshProfile
@@ -16,28 +18,13 @@ struct MainHeaderView: View {
     var body: some View {
         HStack(spacing: 10) {
             HStack(spacing: 8) {
-                Spacer()
-                    .frame(width: 50)
-
-                Text(mode == .ports ? "Ports" : "Settings")
-                    .font(.system(size: 20, weight: .semibold, design: .rounded))
-                    .foregroundStyle(Color.black.opacity(0.86))
-                    .lineLimit(1)
-                    .fixedSize(horizontal: true, vertical: false)
+                Color.clear
+                    .frame(width: trafficLightReserveWidth, height: 1)
 
                 if mode == .ports {
-                    Text("\(visiblePortCount)")
-                        .font(.system(size: 12, weight: .medium, design: .rounded))
-                        .foregroundStyle(Color.black.opacity(0.62))
-                        .padding(.horizontal, 9)
-                        .padding(.vertical, 4)
-                        .background(
-                            Capsule()
-                                .fill(Color.white.opacity(0.82))
-                        )
+                    countBadge
                 }
             }
-            .layoutPriority(1)
 
             Spacer(minLength: 0)
 
@@ -48,19 +35,18 @@ struct MainHeaderView: View {
                 backButton
             }
         }
-        .padding(.leading, 4)
+        .frame(height: 34)
+        .padding(.leading, 0)
         .padding(.trailing, 8)
-        .padding(.top, 7)
-        .padding(.bottom, 5)
+        .padding(.vertical, 3)
         .background(
-            RoundedRectangle(cornerRadius: 20, style: .continuous)
-                .fill(Color.white.opacity(0.9))
+            RoundedRectangle(cornerRadius: 18, style: .continuous)
+                .fill(Color.white.opacity(0.92))
         )
         .overlay(
-            RoundedRectangle(cornerRadius: 20, style: .continuous)
+            RoundedRectangle(cornerRadius: 18, style: .continuous)
                 .stroke(Color.black.opacity(0.04), lineWidth: 1)
         )
-        .shadow(color: Color.black.opacity(0.05), radius: 10, x: 0, y: 4)
     }
 
     private var refreshModeControl: some View {
@@ -87,6 +73,20 @@ struct MainHeaderView: View {
             Capsule()
                 .fill(Color.white.opacity(0.88))
         )
+    }
+
+    private var countBadge: some View {
+        Text("\(visiblePortCount)")
+            .font(.system(size: 14, weight: .bold, design: .rounded))
+            .foregroundStyle(Color.black.opacity(0.72))
+            .lineLimit(1)
+            .fixedSize()
+            .padding(.horizontal, 12)
+            .padding(.vertical, 7)
+            .background(
+                Capsule()
+                    .fill(Color.white.opacity(0.94))
+            )
     }
 
     private var settingsButton: some View {

@@ -4,26 +4,24 @@ import SwiftUI
 private enum WindowChrome {
     static let contentWidth: CGFloat = 360
     static let contentHeight: CGFloat = 560
-    static let trafficLightTopInset: CGFloat = 18
-    static let trafficLightLeadingInset: CGFloat = 18
-    static let trafficLightSpacing: CGFloat = 6
+    static let trafficLightTopInset: CGFloat = 24
+    static let trafficLightLeadingInset: CGFloat = 14
 }
 
-@main
-struct PortWatchApp: App {
+public struct PortWatchRootApp: App {
     @NSApplicationDelegateAdaptor(AppDelegate.self) private var appDelegate
     @StateObject private var settingsStore: PortWatchSettingsStore
     @StateObject private var store: PortWatchStore
     @StateObject private var updater: AppUpdater
 
-    init() {
+    public init() {
         let settingsStore = PortWatchSettingsStore()
         _settingsStore = StateObject(wrappedValue: settingsStore)
         _store = StateObject(wrappedValue: PortWatchStore(settingsStore: settingsStore))
         _updater = StateObject(wrappedValue: AppUpdater())
     }
 
-    var body: some Scene {
+    public var body: some Scene {
         WindowGroup(id: "main") {
             ContentView(
                 store: store,
@@ -62,7 +60,7 @@ struct PortWatchApp: App {
                 updater: updater
             )
         } label: {
-            MenuBarStatusLabelView(store: store)
+            MenuBarStatusLabelView()
         }
         .menuBarExtraStyle(.window)
     }
@@ -84,35 +82,36 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         }
 
         let contentSize = NSSize(width: WindowChrome.contentWidth, height: WindowChrome.contentHeight)
-        window.styleMask.insert(.fullSizeContentView)
-        window.setContentSize(contentSize)
+        let currentFrame = window.frame
+        let targetFrame = NSRect(
+            x: currentFrame.minX,
+            y: currentFrame.maxY - contentSize.height,
+            width: contentSize.width,
+            height: contentSize.height
+        )
+
+        window.styleMask = [.borderless, .fullSizeContentView, .miniaturizable]
+        window.setFrame(targetFrame, display: true)
         window.minSize = contentSize
         window.maxSize = contentSize
         window.titleVisibility = .hidden
         window.titlebarAppearsTransparent = true
         window.titlebarSeparatorStyle = .none
+        window.isOpaque = false
+        window.backgroundColor = .clear
+        window.hasShadow = true
         window.isMovableByWindowBackground = true
 
         guard
             let closeButton = window.standardWindowButton(.closeButton),
             let miniButton = window.standardWindowButton(.miniaturizeButton),
-            let zoomButton = window.standardWindowButton(.zoomButton),
-            let buttonContainer = closeButton.superview
+            let zoomButton = window.standardWindowButton(.zoomButton)
         else {
             return
         }
 
-        let buttons = [closeButton, miniButton, zoomButton]
-        let startX = WindowChrome.trafficLightLeadingInset
-        let spacing = WindowChrome.trafficLightSpacing
-        let y = buttonContainer.frame.height - closeButton.frame.height - WindowChrome.trafficLightTopInset
-
-        for (index, button) in buttons.enumerated() {
-            let origin = NSPoint(
-                x: startX + CGFloat(index) * (button.frame.width + spacing),
-                y: y
-            )
-            button.setFrameOrigin(origin)
-        }
+        closeButton.isHidden = true
+        miniButton.isHidden = true
+        zoomButton.isHidden = true
     }
 }

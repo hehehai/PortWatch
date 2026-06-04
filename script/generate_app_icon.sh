@@ -3,24 +3,29 @@ set -euo pipefail
 
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 ASSETS_DIR="$ROOT_DIR/Assets"
-SOURCE_SVG="$ASSETS_DIR/portwatch.svg"
+MASTER_SOURCE_PNG="$ASSETS_DIR/portwatch-logo.png"
 MASTER_PNG="$ASSETS_DIR/portwatch-icon.png"
+MENU_BAR_SVG="$ASSETS_DIR/menu-bar-icon.svg"
+MENU_BAR_PNG="$ASSETS_DIR/menu-bar-icon.png"
 ICONSET_DIR="$ASSETS_DIR/AppIcon.iconset"
 ICONS_ICNS="$ASSETS_DIR/AppIcon.icns"
-TMP_DIR="$ROOT_DIR/tmp/icongen"
-PREVIEW_PNG="$TMP_DIR/portwatch.svg.png"
 
-if [[ ! -f "$SOURCE_SVG" ]]; then
-  echo "Missing icon source: $SOURCE_SVG" >&2
+if [[ -f "$MASTER_SOURCE_PNG" ]]; then
+  sips -z 1024 1024 "$MASTER_SOURCE_PNG" --out "$MASTER_PNG" >/dev/null
+fi
+
+if [[ ! -f "$MASTER_PNG" ]]; then
+  echo "Missing icon source PNG: $MASTER_SOURCE_PNG or $MASTER_PNG" >&2
   exit 1
 fi
 
-mkdir -p "$TMP_DIR"
+if [[ -f "$MENU_BAR_SVG" ]]; then
+  sips -s format png "$MENU_BAR_SVG" --out "$MENU_BAR_PNG" >/dev/null
+  sips -z 64 64 "$MENU_BAR_PNG" --out "$MENU_BAR_PNG" >/dev/null
+fi
+
 rm -rf "$ICONSET_DIR"
 mkdir -p "$ICONSET_DIR"
-
-qlmanage -t -s 1024 -o "$TMP_DIR" "$SOURCE_SVG" >/dev/null 2>&1
-cp "$PREVIEW_PNG" "$MASTER_PNG"
 
 make_icon() {
   local size="$1"
@@ -44,3 +49,6 @@ iconutil -c icns "$ICONSET_DIR" -o "$ICONS_ICNS"
 echo "Generated:"
 echo "  $MASTER_PNG"
 echo "  $ICONS_ICNS"
+if [[ -f "$MENU_BAR_PNG" ]]; then
+  echo "  $MENU_BAR_PNG"
+fi

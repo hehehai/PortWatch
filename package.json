@@ -1,0 +1,46 @@
+{
+  "name": "portwatch",
+  "version": "0.1.0",
+  "productName": "PortWatch",
+  "description": "Cross-platform port manager built with Electron, Vue, and TypeScript.",
+  "main": "out/main/main.js",
+  "type": "module",
+  "scripts": {
+    "dev": "electron-vite dev",
+    "build": "vue-tsc --noEmit && electron-vite build",
+    "preview": "electron-vite preview",
+    "app:mac": "npm run build && node script/package-electron.mjs app --platform=darwin",
+    "app:win": "npm run build && node script/package-electron.mjs app --platform=win32",
+    "velopack:mac": "npm run app:mac && node script/package-electron.mjs velopack --platform=darwin",
+    "velopack:win": "npm run app:win && node script/package-electron.mjs velopack --platform=win32",
+    "package:mac": "npm run velopack:mac",
+    "package:win": "npm run velopack:win",
+    "prepare:velopack": "node script/prepare-velopack-cli.mjs",
+    "verify:ports": "node script/verify-port-commands.mjs",
+    "verify:windows-parser": "node script/verify-windows-port-parser.mjs",
+    "verify:release": "node script/verify-electron-release.mjs"
+  },
+  "dependencies": {
+    "@vueuse/core": "^13.9.0",
+    "class-variance-authority": "^0.7.1",
+    "clsx": "^2.1.1",
+    "lucide-vue-next": "^0.468.0",
+    "reka-ui": "^2.9.9",
+    "tailwind-merge": "^2.6.0",
+    "velopack": "^1.2.0",
+    "vue": "^3.5.22"
+  },
+  "devDependencies": {
+    "@electron/packager": "^20.0.0",
+    "@swc/core": "^1.15.3",
+    "@vitejs/plugin-vue": "^5.2.4",
+    "autoprefixer": "^10.4.21",
+    "electron": "^33.4.11",
+    "electron-vite": "^5.0.0",
+    "postcss": "^8.5.6",
+    "tailwindcss": "^3.4.18",
+    "typescript": "^5.9.3",
+    "vite": "^6.4.1",
+    "vue-tsc": "^2.2.12"
+  }
+}

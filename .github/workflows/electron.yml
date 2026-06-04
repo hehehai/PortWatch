@@ -1,0 +1,78 @@
+name: Electron
+
+"on":
+  pull_request:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+jobs:
+  package:
+    name: ${{ matrix.name }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - name: macOS arm64
+            os: macos-14
+            platform: darwin
+            arch: arm64
+            verify-platform: darwin
+            artifact-path: release/velopack/darwin-arm64
+          - name: Windows x64
+            os: windows-latest
+            platform: win32
+            arch: x64
+            verify-platform: win32
+            artifact-path: release/velopack/win32-x64
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 8.0.x
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Verify native port commands
+        run: npm run verify:ports
+
+      - name: Verify Windows parser fixtures
+        run: npm run verify:windows-parser
+
+      - name: Build Electron app
+        run: npm run build
+
+      - name: Prepare Velopack CLI
+        run: npm run prepare:velopack
+
+      - name: Package Electron app
+        run: node script/package-electron.mjs app --platform=${{ matrix.platform }} --arch=${{ matrix.arch }}
+
+      - name: Package Velopack release
+        run: node script/package-electron.mjs velopack --platform=${{ matrix.platform }} --arch=${{ matrix.arch }}
+
+      - name: Verify release artifacts
+        run: node script/verify-electron-release.mjs --platform=${{ matrix.verify-platform }}
+
+      - name: Audit production dependencies
+        run: npm audit --omit=dev
+
+      - name: Upload Velopack artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: portwatch-${{ matrix.platform }}-${{ matrix.arch }}
+          path: ${{ matrix.artifact-path }}
+          if-no-files-found: error

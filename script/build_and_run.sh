@@ -17,6 +17,7 @@ APP_BINARY="$APP_MACOS/$APP_NAME"
 INFO_PLIST="$APP_CONTENTS/Info.plist"
 APP_ICON="$ROOT_DIR/Assets/AppIcon.icns"
 APP_MENU_BAR_ICON="$ROOT_DIR/Assets/portwatch-icon.png"
+APP_STATUS_ICON="$ROOT_DIR/Assets/menu-bar-icon.png"
 APP_VERSION="${PORTWATCH_VERSION:-0.1.0}"
 APP_BUILD="${PORTWATCH_BUILD:-1}"
 SPARKLE_FEED_URL="${PORTWATCH_SU_FEED_URL:-}"
@@ -40,6 +41,9 @@ mkdir -p "$APP_MACOS" "$APP_RESOURCES" "$APP_FRAMEWORKS"
 cp "$BUILD_BINARY" "$APP_BINARY"
 cp "$APP_ICON" "$APP_RESOURCES/AppIcon.icns"
 cp "$APP_MENU_BAR_ICON" "$APP_RESOURCES/portwatch-icon.png"
+if [[ -f "$APP_STATUS_ICON" ]]; then
+  cp "$APP_STATUS_ICON" "$APP_RESOURCES/menu-bar-icon.png"
+fi
 
 if [[ -n "$SPARKLE_FRAMEWORK" && -d "$SPARKLE_FRAMEWORK" ]]; then
   ditto "$SPARKLE_FRAMEWORK" "$APP_FRAMEWORKS/Sparkle.framework"

@@ -140,12 +140,12 @@ private struct PortItemCard: View {
     private var detailCard: some View {
         HStack(alignment: .top, spacing: 12) {
             VStack(alignment: .leading, spacing: 8) {
-                detailLine(label: "Address", value: record.endpoint)
-                detailLine(label: "Source", value: secondaryDetail)
-
-                if let launchedBy = record.launchedBy {
-                    detailLine(label: "Launch", value: launchedBy)
+                HStack(alignment: .top, spacing: 14) {
+                    detailLine(label: "Launch", value: launchDetail)
+                    detailLine(label: "PID", value: String(record.pid))
                 }
+
+                detailLine(label: "Source", value: secondaryDetail)
             }
 
             Spacer(minLength: 8)
@@ -180,7 +180,11 @@ private struct PortItemCard: View {
     }
 
     private var primarySubtitle: String {
-        "PID \(record.pid) • \(secondaryDetail)"
+        secondaryDetail
+    }
+
+    private var launchDetail: String {
+        record.launchedBy ?? "Unavailable"
     }
 
     private var secondaryDetail: String {
@@ -196,7 +200,7 @@ private struct PortItemCard: View {
             Text(value)
                 .font(.system(size: 11, weight: .medium, design: .rounded))
                 .foregroundStyle(Color.black.opacity(0.68))
-                .lineLimit(1)
+                .lineLimit(label == "Source" ? 2 : 1)
                 .truncationMode(.middle)
         }
     }
