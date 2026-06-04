@@ -5,7 +5,6 @@ import { arch as hostArch, platform as hostPlatform } from 'node:os'
 import { dirname, join } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { spawn } from 'node:child_process'
-import { packager } from '@electron/packager'
 
 const rootDir = dirname(dirname(fileURLToPath(import.meta.url)))
 const packageJson = JSON.parse(await readFile(join(rootDir, 'package.json'), 'utf8'))
@@ -50,41 +49,7 @@ async function packageElectronApp() {
   const extraResource = await prepareExtraResources(stageDir)
   await mkdir(appOutDir, { recursive: true })
 
-  if (targetPlatform === 'win32' && hostPlatform() === 'win32') {
-    return packageElectronAppWithCli(stageDir, extraResource)
-  }
-
-  return packager({
-    dir: stageDir,
-    name: appName,
-    executableName: appName,
-    platform: targetPlatform,
-    arch: targetArch,
-    out: appOutDir,
-    overwrite: true,
-    asar: false,
-    appBundleId: appId,
-    helperBundleId: `${appId}.helper`,
-    appCategoryType: 'public.app-category.developer-tools',
-    appVersion: packageJson.version,
-    icon: targetPlatform === 'darwin'
-      ? join(rootDir, 'Assets', 'AppIcon.icns')
-      : join(rootDir, 'Assets', 'portwatch.ico'),
-    extraResource,
-    prune: false,
-    win32metadata: {
-      CompanyName: 'Doit',
-      FileDescription: appName,
-      ProductName: appName,
-      InternalName: appName,
-      OriginalFilename: `${appName}.exe`,
-      'requested-execution-level': 'asInvoker'
-    },
-    extendInfo: {
-      CFBundleDisplayName: appName,
-      LSMinimumSystemVersion: '11.0'
-    }
-  })
+  return packageElectronAppWithCli(stageDir, extraResource)
 }
 
 async function packageElectronAppWithCli(stageDir, extraResource) {
@@ -101,14 +66,28 @@ async function packageElectronAppWithCli(stageDir, extraResource) {
     `--electron-version=${normalizePackageVersion(packageJson.devDependencies.electron)}`,
     `--executable-name=${appName}`,
     `--app-version=${packageJson.version}`,
-    `--icon=${join(rootDir, 'Assets', 'portwatch.ico')}`,
-    '--win32metadata.CompanyName=Doit',
-    `--win32metadata.FileDescription=${appName}`,
-    `--win32metadata.ProductName=${appName}`,
-    `--win32metadata.InternalName=${appName}`,
-    `--win32metadata.OriginalFilename=${appName}.exe`,
-    '--win32metadata.requested-execution-level=asInvoker'
+    `--icon=${targetPlatform === 'darwin' ? join(rootDir, 'Assets', 'AppIcon.icns') : join(rootDir, 'Assets', 'portwatch.ico')}`
   ]
+
+  if (targetPlatform === 'darwin') {
+    args.push(
+      `--app-bundle-id=${appId}`,
+      `--helper-bundle-id=${appId}.helper`,
+      '--app-category-type=public.app-category.developer-tools',
+      `--extend-info=${await prepareDarwinExtendInfo(stageDir)}`
+    )
+  }
+
+  if (targetPlatform === 'win32') {
+    args.push(
+      '--win32metadata.CompanyName=Doit',
+      `--win32metadata.FileDescription=${appName}`,
+      `--win32metadata.ProductName=${appName}`,
+      `--win32metadata.InternalName=${appName}`,
+      `--win32metadata.OriginalFilename=${appName}.exe`,
+      '--win32metadata.requested-execution-level=asInvoker'
+    )
+  }
 
   for (const resource of extraResource) {
     args.push(`--extra-resource=${resource}`)
@@ -116,6 +95,22 @@ async function packageElectronAppWithCli(stageDir, extraResource) {
 
   await run(process.execPath, args)
   return [join(appOutDir, `${appName}-${targetPlatform}-${targetArch}`)]
+}
+
+async function prepareDarwinExtendInfo(stageDir) {
+  const path = join(stageDir, 'ExtendInfo.plist')
+  await writeFile(path, `<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+  <key>CFBundleDisplayName</key>
+  <string>${appName}</string>
+  <key>LSMinimumSystemVersion</key>
+  <string>11.0</string>
+</dict>
+</plist>
+`)
+  return path
 }
 
 async function prepareStageDir() {
