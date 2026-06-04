@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 import { constants } from 'node:fs'
-import { access, cp, mkdir, readFile, rm, writeFile } from 'node:fs/promises'
+import { access, chmod, cp, mkdir, readFile, readdir, rename, rm, writeFile } from 'node:fs/promises'
 import { arch as hostArch, platform as hostPlatform } from 'node:os'
 import { dirname, join } from 'node:path'
 import { fileURLToPath } from 'node:url'
@@ -94,7 +94,9 @@ async function packageElectronAppWithCli(stageDir, extraResource) {
   }
 
   await run(process.execPath, args)
-  return [join(appOutDir, `${appName}-${targetPlatform}-${targetArch}`)]
+  const outputDir = join(appOutDir, `${appName}-${targetPlatform}-${targetArch}`)
+  await normalizePackagedApp(outputDir)
+  return [outputDir]
 }
 
 async function prepareDarwinExtendInfo(stageDir) {
@@ -177,10 +179,50 @@ async function findOrCreatePackagedApp() {
   const expected = join(appOutDir, `${appName}-${targetPlatform}-${targetArch}`)
   try {
     await access(expected, constants.R_OK)
+    await normalizePackagedApp(expected)
     return [expected]
   } catch {
     return packageElectronApp()
   }
+}
+
+async function normalizePackagedApp(packagedPath) {
+  if (targetPlatform === 'darwin') {
+    const appBundle = join(packagedPath, `${appName}.app`)
+    const macosDir = join(appBundle, 'Contents', 'MacOS')
+    const desiredExecutable = join(macosDir, appName)
+    await ensureNamedExecutable(macosDir, desiredExecutable)
+    await chmod(desiredExecutable, 0o755)
+    console.log(`Electron main executable: ${desiredExecutable}`)
+    return
+  }
+
+  if (targetPlatform === 'win32') {
+    const desiredExecutable = join(packagedPath, `${appName}.exe`)
+    await ensureNamedExecutable(packagedPath, desiredExecutable, '.exe')
+    console.log(`Electron main executable: ${desiredExecutable}`)
+  }
+}
+
+async function ensureNamedExecutable(directory, desiredExecutable, extension) {
+  try {
+    await access(desiredExecutable, constants.R_OK)
+    return
+  } catch {
+    // Electron Packager can vary executable names by host/shell path handling.
+  }
+
+  const entries = await readdir(directory)
+  const candidates = extension
+    ? entries.filter((entry) => entry.toLowerCase().endsWith(extension))
+    : entries
+
+  if (candidates.length === 1) {
+    await rename(join(directory, candidates[0]), desiredExecutable)
+    return
+  }
+
+  fail(`Could not locate Electron executable in ${directory}. Entries: ${entries.join(', ') || '(empty)'}`)
 }
 
 async function packageVelopack(packagedPath) {
@@ -232,7 +274,7 @@ async function assertMainExecutable(packDir, mainExe) {
     : join(packDir, mainExe)
 
   try {
-    await access(expectedPath, constants.X_OK)
+    await access(expectedPath, targetPlatform === 'darwin' ? constants.X_OK : constants.R_OK)
   } catch {
     fail(`Packaged app is missing Velopack main executable: ${expectedPath}`)
   }
