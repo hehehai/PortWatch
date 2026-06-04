@@ -204,6 +204,8 @@ async function packageVelopack(packagedPath) {
     ? appName
     : `${appName}.exe`
 
+  await assertMainExecutable(packDir, mainExe)
+
   const args = [
     'pack',
     '--packId', appId,
@@ -219,8 +221,21 @@ async function packageVelopack(packagedPath) {
     args.push('--channel', releaseChannel)
   }
 
+  console.log(`Velopack command: ${command.label}`)
   await run(command.executable, [...command.prefixArgs, ...velopackTargetDirective(), ...args])
   console.log(`Velopack output: ${velopackOutDir}`)
+}
+
+async function assertMainExecutable(packDir, mainExe) {
+  const expectedPath = targetPlatform === 'darwin'
+    ? join(packDir, 'Contents', 'MacOS', mainExe)
+    : join(packDir, mainExe)
+
+  try {
+    await access(expectedPath, constants.X_OK)
+  } catch {
+    fail(`Packaged app is missing Velopack main executable: ${expectedPath}`)
+  }
 }
 
 function velopackTargetDirective() {
@@ -251,22 +266,22 @@ function velopackRuntime() {
 
 async function resolveVelopackCommand() {
   if (process.env.VPK_PATH) {
-    return { executable: process.env.VPK_PATH, prefixArgs: [] }
+    return { executable: process.env.VPK_PATH, prefixArgs: [], label: process.env.VPK_PATH }
   }
 
   const vpk = await findCommand('vpk')
   if (vpk) {
-    return { executable: vpk, prefixArgs: [] }
-  }
-
-  const dnx = await findCommand('dnx')
-  if (dnx) {
-    return { executable: dnx, prefixArgs: ['vpk'] }
+    return { executable: vpk, prefixArgs: [], label: vpk }
   }
 
   const dotnet = await resolveDotnetCommand()
   if (dotnet && await fileExists(localVpkDll)) {
-    return { executable: dotnet, prefixArgs: [localVpkDll] }
+    return { executable: dotnet, prefixArgs: [localVpkDll], label: `${dotnet} ${localVpkDll}` }
+  }
+
+  const dnx = await findCommand('dnx')
+  if (dnx) {
+    return { executable: dnx, prefixArgs: ['vpk'], label: `${dnx} vpk` }
   }
 
   return undefined
@@ -363,7 +378,11 @@ async function fileExists(path) {
 
 function run(command, args) {
   return new Promise((resolve, reject) => {
-    const child = spawn(command, args, { cwd: rootDir, stdio: 'inherit' })
+    const child = spawn(command, args, {
+      cwd: rootDir,
+      stdio: 'inherit',
+      shell: hostPlatform() === 'win32' && /\.(cmd|bat)$/i.test(command)
+    })
     child.on('error', reject)
     child.on('exit', (code) => {
       if (code === 0) resolve()
