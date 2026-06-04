@@ -1,8 +1,9 @@
 #!/usr/bin/env node
 import { access, readFile } from 'node:fs/promises'
-import { join } from 'node:path'
+import { dirname, join } from 'node:path'
+import { fileURLToPath } from 'node:url'
 
-const rootDir = new URL('..', import.meta.url).pathname
+const rootDir = dirname(dirname(fileURLToPath(import.meta.url)))
 const platform = readOption('--platform') ?? 'all'
 
 if (!['all', 'darwin', 'win32'].includes(platform)) {
