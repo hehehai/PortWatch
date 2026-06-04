@@ -1,6 +1,6 @@
 # PortWatch
 
-PortWatch is being migrated to an Electron Vite + Vue + TypeScript desktop app for macOS and Windows.
+PortWatch is an Electron Vite + Vue + TypeScript desktop app for macOS and Windows.
 
 The Electron app includes:
 
@@ -38,7 +38,7 @@ Preferences are stored under the Electron `userData` directory as `preferences.j
 npm run build
 ```
 
-The Codex Run action is wired to `script/run-electron.sh`, which launches the Electron Vite development app. The older Swift/Xcode files are retained only as migration history; Electron packaging uses a minimal staging directory and `npm run verify:release` asserts that Swift/Xcode sources are not included in macOS or Windows app artifacts.
+The Codex Run action is wired to `script/run-electron.sh`, which launches the Electron Vite development app. Electron packaging uses a minimal staging directory and `npm run verify:release` asserts that legacy native project files are not included in macOS or Windows app artifacts.
 
 ## CI
 
@@ -62,7 +62,7 @@ npx shadcn-vue@latest add button badge --yes --overwrite
 
 ## Package Electron Apps
 
-Electron app bundles are generated from a minimal staging directory so Swift sources, build caches, Git metadata, screenshots, and other workspace files are not copied into the packaged app.
+Electron app bundles are generated from a minimal staging directory so build caches, Git metadata, screenshots, and other workspace files are not copied into the packaged app.
 
 ```sh
 npm run app:mac
