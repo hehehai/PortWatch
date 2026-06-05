@@ -18,15 +18,26 @@ await download(packageUrl, packagePath)
 await rm(extractDir, { recursive: true, force: true })
 await mkdir(extractDir, { recursive: true })
 await extract(packagePath, extractDir)
-await cp(join(extractDir, 'vendor'), join(extractDir, 'tools', 'net8.0', 'any', 'vendor'), { recursive: true })
+await cp(join(extractDir, 'vendor'), join(extractDir, 'tools', 'net8.0', 'any', 'vendor'), {
+  recursive: true,
+})
 
-console.log(`Prepared Velopack CLI package: ${join(extractDir, 'tools', 'net8.0', 'any', 'vpk.dll')}`)
-console.log('Install a .NET 8+ runtime or set DOTNET_PATH before running pnpm run package:mac/package:win.')
+console.log(
+  `Prepared Velopack CLI package: ${join(extractDir, 'tools', 'net8.0', 'any', 'vpk.dll')}`,
+)
+console.log(
+  'Install a .NET 8+ runtime or set DOTNET_PATH before running pnpm run package:mac/package:win.',
+)
 
 function download(url, destination) {
   return new Promise((resolve, reject) => {
     const request = https.get(url, (response) => {
-      if (response.statusCode && response.statusCode >= 300 && response.statusCode < 400 && response.headers.location) {
+      if (
+        response.statusCode &&
+        response.statusCode >= 300 &&
+        response.statusCode < 400 &&
+        response.headers.location
+      ) {
         response.resume()
         download(response.headers.location, destination).then(resolve, reject)
         return
@@ -53,17 +64,18 @@ function download(url, destination) {
   })
 }
 
-function extract(packagePath, outputDir) {
+function extract(archivePath, outputDir) {
   if (process.platform === 'win32') {
     return run('powershell.exe', [
       '-NoProfile',
-      '-ExecutionPolicy', 'Bypass',
+      '-ExecutionPolicy',
+      'Bypass',
       '-Command',
-      `Expand-Archive -LiteralPath ${quotePowerShell(packagePath)} -DestinationPath ${quotePowerShell(outputDir)} -Force`
+      `Expand-Archive -LiteralPath ${quotePowerShell(archivePath)} -DestinationPath ${quotePowerShell(outputDir)} -Force`,
     ])
   }
 
-  return run('unzip', ['-q', packagePath, '-d', outputDir])
+  return run('unzip', ['-q', archivePath, '-d', outputDir])
 }
 
 function run(command, args) {

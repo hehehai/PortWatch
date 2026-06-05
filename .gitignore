@@ -7,6 +7,13 @@ tmp/
 .swiftpm/
 .DS_Store
 Assets/portwatch-update.json
+electron.vite.config.d.ts
+electron.vite.config.js
+src/**/*.d.ts
+!src/preload/global.d.ts
+!src/renderer/src/env.d.ts
+src/**/*.js
+tsconfig.*.tsbuildinfo
 
 xcuserdata/
 *.xcuserstate

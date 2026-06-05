@@ -1,0 +1,143 @@
+{
+  "$schema": "zed://schemas/settings",
+  "tab_size": 2,
+  "hard_tabs": false,
+  "preferred_line_length": 100,
+  "format_on_save": "on",
+  "remove_trailing_whitespace_on_save": true,
+  "ensure_final_newline_on_save": true,
+  "languages": {
+    "TypeScript": {
+      "language_servers": ["!biome", "..."],
+      "formatter": {
+        "external": {
+          "command": "pnpm",
+          "arguments": [
+            "exec",
+            "oxfmt",
+            "--config",
+            ".oxfmtrc.json",
+            "--stdin-filepath",
+            "{buffer_path}"
+          ]
+        }
+      }
+    },
+    "JavaScript": {
+      "language_servers": ["!biome", "..."],
+      "formatter": {
+        "external": {
+          "command": "pnpm",
+          "arguments": [
+            "exec",
+            "oxfmt",
+            "--config",
+            ".oxfmtrc.json",
+            "--stdin-filepath",
+            "{buffer_path}"
+          ]
+        }
+      }
+    },
+    "TSX": {
+      "language_servers": ["!biome", "..."],
+      "formatter": {
+        "external": {
+          "command": "pnpm",
+          "arguments": [
+            "exec",
+            "oxfmt",
+            "--config",
+            ".oxfmtrc.json",
+            "--stdin-filepath",
+            "{buffer_path}"
+          ]
+        }
+      }
+    },
+    "JSON": {
+      "language_servers": ["!biome", "..."],
+      "formatter": {
+        "external": {
+          "command": "pnpm",
+          "arguments": [
+            "exec",
+            "oxfmt",
+            "--config",
+            ".oxfmtrc.json",
+            "--stdin-filepath",
+            "{buffer_path}"
+          ]
+        }
+      }
+    },
+    "JSONC": {
+      "language_servers": ["!biome", "..."],
+      "formatter": {
+        "external": {
+          "command": "pnpm",
+          "arguments": [
+            "exec",
+            "oxfmt",
+            "--config",
+            ".oxfmtrc.json",
+            "--stdin-filepath",
+            "{buffer_path}"
+          ]
+        }
+      }
+    },
+    "CSS": {
+      "language_servers": [
+        "tailwindcss-intellisense-css",
+        "!vscode-css-language-server",
+        "!biome",
+        "..."
+      ],
+      "formatter": {
+        "external": {
+          "command": "pnpm",
+          "arguments": [
+            "exec",
+            "oxfmt",
+            "--config",
+            ".oxfmtrc.json",
+            "--stdin-filepath",
+            "{buffer_path}"
+          ]
+        }
+      }
+    },
+    "HTML": {
+      "formatter": {
+        "external": {
+          "command": "pnpm",
+          "arguments": [
+            "exec",
+            "oxfmt",
+            "--config",
+            ".oxfmtrc.json",
+            "--stdin-filepath",
+            "{buffer_path}"
+          ]
+        }
+      }
+    },
+    "Vue.js": {
+      "language_servers": ["!biome", "..."],
+      "formatter": {
+        "external": {
+          "command": "pnpm",
+          "arguments": [
+            "exec",
+            "oxfmt",
+            "--config",
+            ".oxfmtrc.json",
+            "--stdin-filepath",
+            "{buffer_path}"
+          ]
+        }
+      }
+    }
+  }
+}

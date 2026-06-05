@@ -1,0 +1,18 @@
+{
+  "$schema": "./node_modules/oxfmt/configuration_schema.json",
+  "singleQuote": true,
+  "semi": false,
+  "ignorePatterns": [
+    ".build/**",
+    "dist/**",
+    "node_modules/**",
+    "out/**",
+    "release/**",
+    "tmp/**",
+    "electron.vite.config.js",
+    "electron.vite.config.d.ts",
+    "src/**/*.js",
+    "src/**/*.d.ts",
+    "tsconfig.*.tsbuildinfo"
+  ]
+}

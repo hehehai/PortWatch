@@ -4,6 +4,8 @@ import { dirname, join } from 'node:path'
 import { fileURLToPath } from 'node:url'
 
 const rootDir = dirname(dirname(fileURLToPath(import.meta.url)))
+const packageJson = JSON.parse(await readFile(join(rootDir, 'package.json'), 'utf8'))
+const appVersion = packageJson.version
 const platform = readOption('--platform') ?? 'all'
 
 if (!['all', 'darwin', 'win32'].includes(platform)) {
@@ -20,9 +22,9 @@ const darwinRequiredFiles = [
   'release/app/PortWatch-darwin-arm64/PortWatch.app/Contents/Resources/portwatch-icon.png',
   'release/velopack/darwin-arm64/RELEASES-osx',
   'release/velopack/darwin-arm64/releases.osx.json',
-  'release/velopack/darwin-arm64/com.doit.PortWatch-0.1.0-osx-full.nupkg',
+  `release/velopack/darwin-arm64/com.doit.PortWatch-${appVersion}-osx-full.nupkg`,
   'release/velopack/darwin-arm64/com.doit.PortWatch-osx-Portable.zip',
-  'release/velopack/darwin-arm64/com.doit.PortWatch-osx-Setup.pkg'
+  'release/velopack/darwin-arm64/com.doit.PortWatch-osx-Setup.pkg',
 ]
 
 const win32RequiredFiles = [
@@ -35,45 +37,42 @@ const win32RequiredFiles = [
   'release/app/PortWatch-win32-x64/resources/app/out/renderer/index.html',
   'release/app/PortWatch-win32-x64/resources/menu-bar-icon.png',
   'release/app/PortWatch-win32-x64/resources/portwatch-icon.png',
-  'release/velopack/win32-x64/com.doit.PortWatch-0.1.0-full.nupkg',
+  `release/velopack/win32-x64/com.doit.PortWatch-${appVersion}-full.nupkg`,
   'release/velopack/win32-x64/com.doit.PortWatch-win-Portable.zip',
-  'release/velopack/win32-x64/com.doit.PortWatch-win-Setup.exe'
+  'release/velopack/win32-x64/com.doit.PortWatch-win-Setup.exe',
 ]
 
 const darwinForbiddenPackagedPaths = [
   'release/app/PortWatch-darwin-arm64/PortWatch.app/Contents/Resources/app/Package.swift',
   'release/app/PortWatch-darwin-arm64/PortWatch.app/Contents/Resources/app/Sources',
   'release/app/PortWatch-darwin-arm64/PortWatch.app/Contents/Resources/app/PortWatch.xcodeproj',
-  'release/app/PortWatch-darwin-arm64/PortWatch.app/Contents/Resources/app/.git'
+  'release/app/PortWatch-darwin-arm64/PortWatch.app/Contents/Resources/app/.git',
 ]
 
 const win32ForbiddenPackagedPaths = [
   'release/app/PortWatch-win32-x64/resources/app/Package.swift',
   'release/app/PortWatch-win32-x64/resources/app/Sources',
   'release/app/PortWatch-win32-x64/resources/app/PortWatch.xcodeproj',
-  'release/app/PortWatch-win32-x64/resources/app/.git'
+  'release/app/PortWatch-win32-x64/resources/app/.git',
 ]
 
 const requiredFiles = [
   ...(platform === 'all' || platform === 'darwin' ? darwinRequiredFiles : []),
-  ...(platform === 'all' || platform === 'win32' ? win32RequiredFiles : [])
+  ...(platform === 'all' || platform === 'win32' ? win32RequiredFiles : []),
 ]
 
 const forbiddenPackagedPaths = [
   ...(platform === 'all' || platform === 'darwin' ? darwinForbiddenPackagedPaths : []),
-  ...(platform === 'all' || platform === 'win32' ? win32ForbiddenPackagedPaths : [])
+  ...(platform === 'all' || platform === 'win32' ? win32ForbiddenPackagedPaths : []),
 ]
 
-for (const file of requiredFiles) {
-  await assertExists(file)
-}
-
-for (const file of forbiddenPackagedPaths) {
-  await assertMissing(file)
-}
+await Promise.all(requiredFiles.map((file) => assertExists(file)))
+await Promise.all(forbiddenPackagedPaths.map((file) => assertMissing(file)))
 
 if (platform === 'all' || platform === 'darwin') {
-  await assertNoExampleUpdateFeed('release/app/PortWatch-darwin-arm64/PortWatch.app/Contents/Resources/portwatch-update.json')
+  await assertNoExampleUpdateFeed(
+    'release/app/PortWatch-darwin-arm64/PortWatch.app/Contents/Resources/portwatch-update.json',
+  )
 }
 
 if (platform === 'all' || platform === 'win32') {

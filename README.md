@@ -16,9 +16,20 @@ The Electron app includes:
 ```sh
 pnpm install
 pnpm run dev
+pnpm run lint
+pnpm run fmt:check
 pnpm run verify:ports
 pnpm run verify:windows-parser
 pnpm run verify:release
+```
+
+Use these while developing:
+
+```sh
+pnpm run lint
+pnpm run lint:fix
+pnpm run fmt
+pnpm run fmt:check
 ```
 
 The Electron app reads listening TCP ports through native platform commands:
@@ -26,9 +37,10 @@ The Electron app reads listening TCP ports through native platform commands:
 - macOS: `lsof` and `ps`
 - Windows: PowerShell `Get-NetTCPConnection`, `Get-CimInstance`, and `taskkill.exe`
 
-Preferences are stored under the Electron `userData` directory as `preferences.json`. They include:
+Preferences are stored through `electron-store` under the Electron `userData` directory as `preferences.json`. They include:
 
 - selected refresh profile
+- selected list item
 - live and normal refresh intervals
 - monitored port ranges
 
@@ -44,12 +56,22 @@ The Codex Run action is wired to `script/run-electron.sh`, which launches the El
 
 `.github/workflows/electron.yml` runs the Electron verification matrix on `macos-14` and `windows-latest`:
 
+- `oxlint`
+- `oxfmt --check`
 - native port command checks
 - Windows parser and `taskkill.exe` argument fixtures
 - Electron Vite build
 - Velopack CLI preparation
 - platform-specific Electron and Velopack packaging
 - platform-specific release artifact verification
+
+`.github/workflows/release.yml` is the production release pipeline. When you push a tag like `v0.1.0`, it:
+
+- verifies the Git tag matches `package.json.version`
+- builds macOS arm64 and Windows x64 release bundles
+- signs the macOS app and installer, notarizes the macOS installer, and signs the Windows installer
+- publishes Velopack assets to the GitHub Release for that tag
+- writes the release URL, update feed URL, and uploaded asset list to the GitHub Actions job summary
 
 ## UI Components
 
@@ -90,6 +112,8 @@ PORTWATCH_UPDATE_URL=https://your-update-feed.example.com
 PORTWATCH_UPDATE_CHANNEL=stable # optional
 ```
 
+Packaged builds perform a silent startup check and, when a newer release is found, download it and stage it for apply-on-exit through Velopack.
+
 Packaged apps can also read update config from:
 
 - `portwatch-update.json` in Electron `userData`
@@ -102,6 +126,14 @@ PORTWATCH_UPDATE_URL=https://your-update-feed.example.com \
 PORTWATCH_UPDATE_CHANNEL=stable \
 pnpm run package:mac
 ```
+
+The release workflow bakes in this GitHub-hosted update feed automatically:
+
+```text
+https://github.com/<owner>/<repo>/releases/latest/download
+```
+
+That means shipped apps fetch `RELEASES`, `releases.win.json`, `releases.osx.json`, installers, and `.nupkg` files directly from the latest GitHub Release.
 
 Velopack release packaging requires the Velopack CLI `vpk` plus a .NET 8+ runtime. The helper script downloads the Velopack CLI NuGet package into `release/tools`:
 
@@ -137,4 +169,59 @@ ELECTRON_MIRROR=https://npmmirror.com/mirrors/electron/ pnpm run package:mac
 ELECTRON_MIRROR=https://npmmirror.com/mirrors/electron/ pnpm run package:win
 ```
 
-The generated release packages are currently unsigned and not notarized unless signing identities and notarization options are supplied to Velopack. See the Velopack packaging docs: https://docs.velopack.io/packaging/overview
+## Release
+
+Production releases are tag-driven:
+
+```sh
+git tag v0.1.0
+git push origin v0.1.0
+```
+
+The tag must match `package.json.version`, or `.github/workflows/release.yml` fails early.
+
+Release assets are uploaded into the GitHub Release for that tag, and the GitHub Actions summary includes:
+
+- the GitHub Release URL
+- the baked-in update feed URL
+- the final uploaded asset list
+
+## GitHub Secrets
+
+Configure these repository secrets before pushing a release tag.
+
+Required for macOS signing and notarization:
+
+- `MACOS_CERTIFICATE_P12_BASE64`: Developer ID Application certificate exported as `.p12`, then base64 encoded
+- `MACOS_CERTIFICATE_PASSWORD`: password for the `.p12`
+- `MACOS_KEYCHAIN_PASSWORD`: temporary keychain password used in GitHub Actions
+- `MACOS_SIGN_IDENTITY`: usually `Developer ID Application: ...`
+- `MACOS_INSTALLER_IDENTITY`: usually `Developer ID Installer: ...`
+- `MACOS_NOTARY_API_KEY_P8_BASE64`: App Store Connect notarization API key `.p8`, base64 encoded
+- `MACOS_NOTARY_API_KEY_ID`: App Store Connect key ID
+- `MACOS_NOTARY_API_ISSUER`: App Store Connect issuer UUID
+
+Required for Windows signing:
+
+- `WINDOWS_CERTIFICATE_PFX_BASE64`: code signing certificate exported as `.pfx`, then base64 encoded
+- `WINDOWS_CERTIFICATE_PASSWORD`: password for the `.pfx`
+
+Optional GitHub repository variables:
+
+- `WINDOWS_TIMESTAMP_SERVER`: defaults to `http://timestamp.digicert.com`
+- `WINDOWS_SIGN_DESCRIPTION`: defaults to `PortWatch`
+- `WINDOWS_SIGN_WEBSITE`: optional product URL embedded in the signature
+
+Useful local environment variables for manual packaging:
+
+- `PORTWATCH_UPDATE_URL`
+- `PORTWATCH_UPDATE_CHANNEL`
+- `PORTWATCH_CHANNEL`
+- `PORTWATCH_APPLE_SIGN_IDENTITY`
+- `PORTWATCH_APPLE_INSTALLER_IDENTITY`
+- `PORTWATCH_APPLE_KEYCHAIN`
+- `PORTWATCH_APPLE_NOTARY_API_KEY_PATH`
+- `PORTWATCH_APPLE_NOTARY_API_KEY_ID`
+- `PORTWATCH_APPLE_NOTARY_API_ISSUER`
+- `WINDOWS_CERTIFICATE_FILE`
+- `WINDOWS_CERTIFICATE_PASSWORD`

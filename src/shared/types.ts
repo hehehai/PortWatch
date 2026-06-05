@@ -26,6 +26,24 @@ export interface UpdateStatus {
   pendingRestart?: boolean
 }
 
+export type WindowPlatform =
+  | 'aix'
+  | 'android'
+  | 'darwin'
+  | 'freebsd'
+  | 'haiku'
+  | 'linux'
+  | 'netbsd'
+  | 'openbsd'
+  | 'sunos'
+  | 'win32'
+  | 'cygwin'
+
+export interface WindowState {
+  isFullScreen: boolean
+  platform: WindowPlatform
+}
+
 export type RefreshProfile = 'live' | 'normal'
 
 export interface PortRange {
@@ -34,9 +52,15 @@ export interface PortRange {
   upperBound: number
 }
 
+export interface StarredPort {
+  port: number
+  path: string
+}
+
 export interface PortWatchPreferences {
   selectedRefreshProfile: RefreshProfile
   liveRefreshInterval: number
   normalRefreshInterval: number
   monitoredPortRanges: PortRange[]
+  starredPorts: StarredPort[]
 }

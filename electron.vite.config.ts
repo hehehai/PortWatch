@@ -8,25 +8,25 @@ export default defineConfig({
     build: {
       rollupOptions: {
         input: resolve(__dirname, 'src/electron/main.ts'),
-        external: ['velopack']
-      }
-    }
+        external: ['velopack'],
+      },
+    },
   },
   preload: {
     plugins: [externalizeDepsPlugin()],
     build: {
       rollupOptions: {
-        input: resolve(__dirname, 'src/preload/index.ts')
-      }
-    }
+        input: resolve(__dirname, 'src/preload/index.ts'),
+      },
+    },
   },
   renderer: {
     root: resolve(__dirname, 'src/renderer'),
     plugins: [vue()],
     resolve: {
       alias: {
-        '@': resolve(__dirname, 'src/renderer/src')
-      }
-    }
-  }
+        '@': resolve(__dirname, 'src/renderer/src'),
+      },
+    },
+  },
 })

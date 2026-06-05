@@ -18,7 +18,9 @@ export async function terminateProcess(pid: number): Promise<void> {
   try {
     process.kill(pid, 'SIGTERM')
   } catch (error) {
-    throw new Error(`Failed to send SIGTERM to PID ${pid}: ${String(error)}`)
+    throw new Error(`Failed to send SIGTERM to PID ${pid}: ${String(error)}`, {
+      cause: error,
+    })
   }
 
   await sleep(600)

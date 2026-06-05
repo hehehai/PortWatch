@@ -11,7 +11,9 @@ try {
   if (current === 'darwin') {
     const lsof = await run('/usr/sbin/lsof', [`-iTCP:${port}`, '-sTCP:LISTEN', '-P', '-n'])
     if (lsof.exitCode !== 0 || !lsof.stdout.includes(String(port))) {
-      fail(`lsof failed to find temporary listener on port ${port}: ${lsof.stderr || lsof.stdout || 'no output'}`)
+      fail(
+        `lsof failed to find temporary listener on port ${port}: ${lsof.stderr || lsof.stdout || 'no output'}`,
+      )
     }
 
     console.log(`macOS listening TCP verification port: ${port}`)
@@ -25,9 +27,15 @@ $pids = @($connections | Select-Object -ExpandProperty OwningProcess -Unique)
 $processes = @(Get-CimInstance Win32_Process | Where-Object { $pids -contains $_.ProcessId } | Select-Object ProcessId,Name,ExecutablePath,ParentProcessId,CreationDate)
 [PSCustomObject]@{ Connections = $connections; Processes = $processes } | ConvertTo-Json -Depth 4
 `
-    const ports = await run('powershell.exe', ['-NoProfile', '-ExecutionPolicy', 'Bypass', '-Command', script], 15000)
+    const ports = await run(
+      'powershell.exe',
+      ['-NoProfile', '-ExecutionPolicy', 'Bypass', '-Command', script],
+      15000,
+    )
     if (ports.exitCode !== 0 || ports.stdout.trim().length === 0) {
-      fail(`PowerShell port query failed for temporary listener on port ${port}: ${ports.stderr || 'no output'}`)
+      fail(
+        `PowerShell port query failed for temporary listener on port ${port}: ${ports.stderr || 'no output'}`,
+      )
     }
 
     const taskkill = await run('where.exe', ['taskkill.exe'])
@@ -52,9 +60,9 @@ $processes = @(Get-CimInstance Win32_Process | Where-Object { $pids -contains $_
 
 function listenForVerification() {
   return new Promise((resolve, reject) => {
-    const server = createServer()
-    server.once('error', reject)
-    server.listen(0, '127.0.0.1', () => resolve(server))
+    const verificationServer = createServer()
+    verificationServer.once('error', reject)
+    verificationServer.listen(0, '127.0.0.1', () => resolve(verificationServer))
   })
 }
 
@@ -65,13 +73,18 @@ function normalizeArray(value) {
 
 function run(command, args, timeout = 8000) {
   return new Promise((resolve) => {
-    execFile(command, args, { timeout, windowsHide: true, maxBuffer: 8 * 1024 * 1024 }, (error, stdout, stderr) => {
-      resolve({
-        stdout: stdout.toString(),
-        stderr: stderr.toString(),
-        exitCode: typeof error?.code === 'number' ? error.code : 0
-      })
-    })
+    execFile(
+      command,
+      args,
+      { timeout, windowsHide: true, maxBuffer: 8 * 1024 * 1024 },
+      (error, stdout, stderr) => {
+        resolve({
+          stdout: stdout.toString(),
+          stderr: stderr.toString(),
+          exitCode: typeof error?.code === 'number' ? error.code : 0,
+        })
+      },
+    )
   })
 }
 

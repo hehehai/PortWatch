@@ -1,5 +1,5 @@
 import { platform } from 'node:os'
-import type { PortRecord } from '../types'
+import type { PortRecord } from '../../shared/types'
 import { runCommand } from './shell'
 import { parseWindowsListeningPortsJson } from './windows-port-parser'
 
@@ -37,26 +37,28 @@ async function fetchMacListeningPorts(): Promise<PortRecord[]> {
   const pids = [...new Set(baseRecords.map((record) => record.pid))]
   const [metadata, launchMetadata] = await Promise.all([
     fetchMacProcessMetadata(pids),
-    fetchMacLaunchMetadata(pids)
+    fetchMacLaunchMetadata(pids),
   ])
 
-  return sortAndDedupe(baseRecords.map((record) => {
-    const item = metadata.get(record.pid)
-    const launch = launchMetadata.get(record.pid)
-    const source = resolveSource(record, item)
+  return sortAndDedupe(
+    baseRecords.map((record) => {
+      const item = metadata.get(record.pid)
+      const launch = launchMetadata.get(record.pid)
+      const source = resolveSource(record, item)
 
-    return {
-      ...record,
-      command: item?.command ?? record.command,
-      workingDirectory: item?.cwd,
-      executablePath: item?.executablePath,
-      source,
-      startedAt: item?.startedAt,
-      uptime: item?.uptime,
-      launchedBy: launch?.launchedBy,
-      launchChain: launch?.launchChain ?? []
-    }
-  }))
+      return {
+        ...record,
+        command: item?.command ?? record.command,
+        workingDirectory: item?.cwd,
+        executablePath: item?.executablePath,
+        source,
+        startedAt: item?.startedAt,
+        uptime: item?.uptime,
+        launchedBy: launch?.launchedBy,
+        launchChain: launch?.launchChain ?? [],
+      }
+    }),
+  )
 }
 
 function parseMacLsof(output: string): PortRecord[] {
@@ -70,18 +72,20 @@ function parseMacLsof(output: string): PortRecord[] {
     const port = parsePort(endpoint)
     if (!Number.isFinite(pid) || !port) return []
 
-    return [{
-      id: `${pid}:${port}:${endpoint}`,
-      pid,
-      command,
-      user,
-      endpoint,
-      address: parseAddress(endpoint),
-      port,
-      protocolName: 'TCP',
-      state: 'LISTEN',
-      launchChain: []
-    }]
+    return [
+      {
+        id: `${pid}:${port}:${endpoint}`,
+        pid,
+        command,
+        user,
+        endpoint,
+        address: parseAddress(endpoint),
+        port,
+        protocolName: 'TCP',
+        state: 'LISTEN',
+        launchChain: [],
+      },
+    ]
   })
 }
 
@@ -92,7 +96,7 @@ async function fetchMacProcessMetadata(pids: number[]): Promise<Map<number, Proc
   const pidList = pids.join(',')
   const [lsof, ps] = await Promise.all([
     runCommand('/usr/sbin/lsof', ['-a', '-d', 'cwd,txt', '-Ffnp', '-p', pidList]),
-    runCommand('/bin/ps', ['-ww', '-p', pidList, '-o', 'pid=', '-o', 'lstart=', '-o', 'command='])
+    runCommand('/bin/ps', ['-ww', '-p', pidList, '-o', 'pid=', '-o', 'lstart=', '-o', 'command=']),
   ])
 
   if (lsof.exitCode === 0) {
@@ -119,7 +123,9 @@ async function fetchMacProcessMetadata(pids: number[]): Promise<Map<number, Proc
   if (ps.exitCode === 0) {
     const now = Date.now()
     for (const line of ps.stdout.split(/\r?\n/)) {
-      const match = line.match(/^\s*(\d+)\s+([A-Z][a-z]{2}\s+[A-Z][a-z]{2}\s+\d+\s+\d{2}:\d{2}:\d{2}\s+\d{4})\s+(.+)$/)
+      const match = line.match(
+        /^\s*(\d+)\s+([A-Z][a-z]{2}\s+[A-Z][a-z]{2}\s+\d+\s+\d{2}:\d{2}:\d{2}\s+\d{4})\s+(.+)$/,
+      )
       if (!match) continue
       const pid = Number(match[1])
       const started = new Date(match[2])
@@ -180,7 +186,11 @@ $pids = @($connections | Select-Object -ExpandProperty OwningProcess -Unique)
 $processes = @(Get-CimInstance Win32_Process | Where-Object { $pids -contains $_.ProcessId } | Select-Object ProcessId,Name,CommandLine,ExecutablePath,ParentProcessId,CreationDate)
 [PSCustomObject]@{ Connections = $connections; Processes = $processes } | ConvertTo-Json -Depth 4
 `
-  const result = await runCommand('powershell.exe', ['-NoProfile', '-ExecutionPolicy', 'Bypass', '-Command', script], 15000)
+  const result = await runCommand(
+    'powershell.exe',
+    ['-NoProfile', '-ExecutionPolicy', 'Bypass', '-Command', script],
+    15000,
+  )
   if (result.exitCode !== 0 || result.stdout.trim().length === 0) return []
 
   return parseWindowsListeningPortsJson(result.stdout)
@@ -198,7 +208,8 @@ function parseAddress(endpoint: string): string {
 function resolveSource(record: PortRecord, metadata?: ProcessMetadata): string | undefined {
   if (!metadata) return undefined
   if (metadata.cwd && metadata.cwd !== '/') return metadata.cwd
-  if (metadata.executablePath) return appName(metadata.executablePath) ?? basename(metadata.executablePath)
+  if (metadata.executablePath)
+    return appName(metadata.executablePath) ?? basename(metadata.executablePath)
   return metadata.command ?? record.command
 }
 
@@ -208,10 +219,10 @@ function appName(value: string): string | undefined {
 }
 
 function basename(value: string): string {
-  return value.split(/[\\/]/).filter(Boolean).pop() ?? value
+  return value.split(/[\\/]/).findLast(Boolean) ?? value
 }
 
 function sortAndDedupe(records: PortRecord[]): PortRecord[] {
   const byId = new Map(records.map((record) => [record.id, record]))
-  return [...byId.values()].sort((a, b) => a.port - b.port || a.pid - b.pid)
+  return [...byId.values()].toSorted((a, b) => a.port - b.port || a.pid - b.pid)
 }

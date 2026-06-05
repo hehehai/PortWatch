@@ -1,0 +1,57 @@
+{
+  "$schema": "./node_modules/oxlint/configuration_schema.json",
+  "plugins": ["typescript", "vue", "import", "unicorn", "oxc"],
+  "categories": {
+    "correctness": "error",
+    "suspicious": "warn",
+    "perf": "warn"
+  },
+  "env": {
+    "builtin": true
+  },
+  "ignorePatterns": [
+    ".build/**",
+    "dist/**",
+    "node_modules/**",
+    "out/**",
+    "release/**",
+    "tmp/**",
+    "electron.vite.config.js",
+    "electron.vite.config.d.ts",
+    "src/**/*.js",
+    "src/**/*.d.ts",
+    "tsconfig.*.tsbuildinfo"
+  ],
+  "rules": {
+    "import/no-cycle": "error",
+    "import/no-duplicates": "error",
+    "oxc/no-map-spread": "off"
+  },
+  "overrides": [
+    {
+      "files": ["src/renderer/src/main.ts"],
+      "rules": {
+        "import/no-unassigned-import": "off"
+      }
+    },
+    {
+      "files": [
+        "*.config.{js,cjs,mjs,ts}",
+        "script/**/*.{js,cjs,mjs,ts}",
+        "src/electron/**/*.ts",
+        "src/preload/**/*.ts",
+        "tailwind.config.ts"
+      ],
+      "env": {
+        "node": true
+      }
+    },
+    {
+      "files": ["src/renderer/**/*.{ts,vue}"],
+      "env": {
+        "browser": true,
+        "vue": true
+      }
+    }
+  ]
+}
